@@ -63,7 +63,7 @@ async def killdabot(event):
 
 @register(outgoing=True, pattern="^.restart$")
 async def killdabot(event):
-    await event.edit("`*i would be back in a moment*`")
+    await event.edit("`BRB... *PornHub intro*`")
     if BOTLOG:
         await event.client.send_message(BOTLOG_CHATID, "#RESTART \n"
                                         "Bot Restarted")
@@ -87,27 +87,25 @@ async def bot_community(community):
 async def bot_support(wannahelp):
     """ For .support command, just returns the group link. """
     await wannahelp.edit(
-        "Join the Paperplane Extended Channel: @PaperPlaneExtended_news \
-        \nJoin the Paperplane Extended Chat: @PPE_Support")
+        "Join the Paperplane Extended Channel: @PaperplaneExtended\
+        \nJoin the Paperplane Extended Chat: @PaperplaneExtendedSupport")
 
 
 @register(outgoing=True, pattern="^.creator$")
 async def creator(e):
-    await e.edit("[TeKnoways](https://t.me/Three_Cube_TeKnoways)")
+    await e.edit("[AvinashReddy3108](https://t.me/AvinashReddy3108)")
 
 
 @register(outgoing=True, pattern="^.readme$")
 async def reedme(e):
     await e.edit(
         "Here's something for you to read:\n"
-        "\n[Paperplane Extended's README.md file](https://github.com/mkaraniya/PaperplaneExtended/blob/sql-extended/README.md)"
-        "\n[Setup Guide - Basic](https://telegra.ph/How-to-host-a-Telegram-Userbot-11-02)"
-        "\n[Setup Guide - Google Drive](https://telegra.ph/How-To-Setup-GDrive-11-02)"
-        "\n[Setup Guide - LastFM Module](https://telegra.ph/How-to-set-up-LastFM-module-for-Paperplane-userbot-11-02)"
-        "\n[Video Tutorial - 576p](https://mega.nz/#!ErwCESbJ!1ZvYAKdTEfb6y1FnqqiLhHH9vZg4UB2QZNYL9fbQ9vs)"
-        "\n[Video Tutorial - 1080p](https://mega.nz/#!x3JVhYwR!u7Uj0nvD8_CyyARrdKrFqlZEBFTnSVEiqts36HBMr-o)"
-        "\n[Special - Note](https://telegra.ph/Special-Note-11-02)")
-    
+        "\n[Paperplane Extended's README.md file](https://github.com/AvinashReddy3108/PaperplaneExtended/blob/sql-extended/README.md)"
+        "\n[Setup Guide - Basic](https://telegra.ph/How-to-host-a-Telegram-Userbot-07-24)"
+        "\n[Setup Guide - Google Drive](https://telegra.ph/How-To-Setup-GDrive-07-27)"
+        "\n[Setup Guide - LastFM Module](https://telegra.ph/How-to-set-up-LastFM-module-for-Paperplane-userbot-08-10)"
+    )
+
 
 # Copyright (c) Gegham Zakaryan | 2019
 @register(outgoing=True, pattern="^.repeat (.*)")
@@ -128,7 +126,7 @@ async def repeat(rep):
 async def repo_is_here(wannasee):
     """ For .repo command, just returns the repo URL. """
     await wannasee.edit(
-        "Click [here](https://github.com/mkaraniya/PaperplaneExtended) to open Paperplane Extended's GitHub page."
+        "Click [here](https://github.com/AvinashReddy3108/PaperplaneExtended) to open Paperplane Extended's GitHub page."
     )
 
 
