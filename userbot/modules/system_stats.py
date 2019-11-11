@@ -3,114 +3,168 @@
 # Licensed under the Raphielscape Public License, Version 1.c (the "License");
 # you may not use this file except in compliance with the License.
 #
-"""
-This module updates the userbot based on Upstream revision
-"""
+""" Userbot module for getting information about the server. """
 
-from os import remove, execl
-import sys
+from asyncio import create_subprocess_shell as asyncrunapp
+from asyncio.subprocess import PIPE as asyncPIPE
+from platform import python_version, uname
+from shutil import which
+from os import remove
+from telethon import version
 
-from git import Repo
-from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
-
-from userbot import CMD_HELP, bot
+from userbot import CMD_HELP, ALIVE_NAME
 from userbot.events import register
 
-
-async def gen_chlog(repo, diff):
-    ch_log = ''
-    d_form = "%d/%m/%y"
-    for c in repo.iter_commits(diff):
-        ch_log += f'•[{c.committed_datetime.strftime(d_form)}]: {c.summary} <{c.author}>\n'
-    return ch_log
+# ================= CONSTANT =================
+DEFAULTUSER = str(ALIVE_NAME) if ALIVE_NAME else uname().node
+# ============================================
 
 
-async def is_off_br(br):
-    off_br = ['sql-extended', 'sql-dirty']
-    for k in off_br:
-        if k == br:
-            return 1
-    return
-
-
-@register(outgoing=True, pattern="^.update(?: |$)(.*)")
-async def upstream(ups):
-    "For .update command, check if the bot is up to date, update if specified"
-    await ups.edit("`Checking for updates, please wait....`")
-    conf = ups.pattern_match.group(1)
-    off_repo = 'https://github.com/AvinashReddy3108/PaperplaneExtended.git'
-
+@register(outgoing=True, pattern="^.sysd$")
+async def sysdetails(sysd):
+    """ For .sysd command, get system info using neofetch. """
     try:
-        txt = "`Oops.. Updater cannot continue due to some problems occured`\n\n**LOGTRACE:**\n"
-        repo = Repo()
-    except NoSuchPathError as error:
-        await ups.edit(f'{txt}\n`directory {error} is not found`')
-        return
-    except InvalidGitRepositoryError as error:
-        await ups.edit(
-            f'{txt}\n`directory {error} does not seems to be a git repository`'
+        neo = "neofetch --stdout"
+        fetch = await asyncrunapp(
+            neo,
+            stdout=asyncPIPE,
+            stderr=asyncPIPE,
         )
-        return
-    except GitCommandError as error:
-        await ups.edit(f'{txt}\n`Early failure! {error}`')
-        return
 
-    ac_br = repo.active_branch.name
-    if not await is_off_br(ac_br):
-        await ups.edit(
-            f'**[UPDATER]:**` Looks like you are using your own custom branch ({ac_br}). \
-            in that case, Updater is unable to identify which branch is to be merged. \
-            please checkout to any official branch`')
-        return
+        stdout, stderr = await fetch.communicate()
+        result = str(stdout.decode().strip()) \
+            + str(stderr.decode().strip())
 
-    try:
-        repo.create_remote('upstream', off_repo)
-    except BaseException:
-        pass
+        await sysd.edit("`" + result + "`")
+    except FileNotFoundError:
+        await sysd.edit("`Install neofetch first !!`")
 
-    ups_rem = repo.remote('upstream')
-    ups_rem.fetch(ac_br)
-    changelog = await gen_chlog(repo, f'HEAD..upstream/{ac_br}')
 
-    if not changelog:
-        await ups.edit(f'\n`Your BOT is` **up-to-date** `with` **{ac_br}**\n')
-        return
+@register(outgoing=True, pattern="^.botver$")
+async def bot_ver(event):
+    """ For .botver command, get the bot version. """
+    if which("git") is not None:
+        invokever = "git describe --all --long"
+        ver = await asyncrunapp(
+            invokever,
+            stdout=asyncPIPE,
+            stderr=asyncPIPE,
+        )
+        stdout, stderr = await ver.communicate()
+        verout = str(stdout.decode().strip()) \
+            + str(stderr.decode().strip())
 
-    if conf != "now":
-        changelog_str = f'**New UPDATE available for [{ac_br}]:\n\nCHANGELOG:**\n`{changelog}`'
-        if len(changelog_str) > 4096:
-            await ups.edit("`Changelog is too big, sending it as a file.`")
-            file = open("output.txt", "w+")
-            file.write(changelog_str)
-            file.close()
-            await ups.client.send_file(
-                ups.chat_id,
-                "output.txt",
-                reply_to=ups.id,
-            )
-            remove("output.txt")
+        invokerev = "git rev-list --all --count"
+        rev = await asyncrunapp(
+            invokerev,
+            stdout=asyncPIPE,
+            stderr=asyncPIPE,
+        )
+        stdout, stderr = await rev.communicate()
+        revout = str(stdout.decode().strip()) \
+            + str(stderr.decode().strip())
+
+        await event.edit("`Userbot Version: "
+                         f"{verout}"
+                         "` \n"
+                         "`Revision: "
+                         f"{revout}"
+                         "`")
+    else:
+        await event.edit(
+            "Shame that you don't have git, You're running 5.0 - 'Extended' anyway"
+        )
+
+
+@register(outgoing=True, pattern="^.pip(?: |$)(.*)")
+async def pipcheck(pip):
+    """ For .pip command, do a pip search. """
+    pipmodule = pip.pattern_match.group(1)
+    if pipmodule:
+        await pip.edit("`Searching . . .`")
+        invokepip = f"pip3 search {pipmodule}"
+        pipc = await asyncrunapp(
+            invokepip,
+            stdout=asyncPIPE,
+            stderr=asyncPIPE,
+        )
+
+        stdout, stderr = await pipc.communicate()
+        pipout = str(stdout.decode().strip()) \
+            + str(stderr.decode().strip())
+
+        if pipout:
+            if len(pipout) > 4096:
+                await pip.edit("`Output too large, sending as file`")
+                file = open("output.txt", "w+")
+                file.write(pipout)
+                file.close()
+                await pip.client.send_file(
+                    pip.chat_id,
+                    "output.txt",
+                    reply_to=pip.id,
+                )
+                remove("output.txt")
+                return
+            await pip.edit("**Query: **\n`"
+                           f"{invokepip}"
+                           "`\n**Result: **\n`"
+                           f"{pipout}"
+                           "`")
         else:
-            await ups.edit(changelog_str)
-        await ups.respond(
-            "`do \".update now\" to update\nDon't if using Heroku`")
-        return
-
-    await ups.edit('`New update found, updating...`')
-    ups_rem.fetch(ac_br)
-    repo.git.reset('--hard', 'FETCH_HEAD')
-    await ups.edit('`Successfully Updated!\n'
-                   'Bot is restarting... Wait for a second!`')
-    await bot.disconnect()
-    # Spin a new instance of bot
-    execl(sys.executable, sys.executable, *sys.argv)
-    # Shut the existing one down
-    exit()
+            await pip.edit("**Query: **\n`"
+                           f"{invokepip}"
+                           "`\n**Result: **\n`No Result Returned/False`")
+    else:
+        await pip.edit("`Use .help pip to see an example`")
 
 
+@register(outgoing=True, pattern="^.alive$")
+async def amireallyalive(alive):
+    """ For .alive command, check if the bot is running.  """
+    await alive.edit("`"
+                     "My bot is running \n\n"
+                     f"Telethon version: {version.__version__} \n"
+                     f"Python: {python_version()} \n"
+                     f"User: {DEFAULTUSER}"
+                     "`")
+
+
+@register(outgoing=True, pattern="^.aliveu")
+async def amireallyaliveuser(username):
+    """ For .aliveu command, change the username in the .alive command. """
+    message = username.text
+    output = '.aliveu [new user without brackets] nor can it be empty'
+    if not (message == '.aliveu' or message[7:8] != ' '):
+        newuser = message[8:]
+        global DEFAULTUSER
+        DEFAULTUSER = newuser
+        output = 'Successfully changed user to ' + newuser + '!'
+    await username.edit("`" f"{output}" "`")
+
+
+@register(outgoing=True, pattern="^.resetalive$")
+async def amireallyalivereset(ureset):
+    """ For .resetalive command, reset the username in the .alive command. """
+    global DEFAULTUSER
+    DEFAULTUSER = str(ALIVE_NAME) if ALIVE_NAME else uname().node
+    await ureset.edit("`" "Successfully reset user for alive!" "`")
+
+
+CMD_HELP.update(
+    {"sysd": ".sysd\
+    \nUsage: Shows system information using neofetch."})
+CMD_HELP.update({"botver": ".botver\
+    \nUsage: Shows the userbot version."})
+CMD_HELP.update(
+    {"pip": ".pip <module(s)>\
+    \nUsage: Does a search of pip modules(s)."})
 CMD_HELP.update({
-    'update':
-    ".update\
-\nUsage: Checks if the main userbot repository has any updates and shows a changelog if so.\
-\n\n.update now\
-\nUsage: Updates your userbot, if there are any updates in the main userbot repository."
+    "alive":
+    ".alive\
+    \nUsage: Type .alive to see wether your bot is working or not.\
+    \n\n.aliveu <text>\
+    \nUsage: Changes the 'user' in alive to the text you want.\
+    \n\n.resetalive\
+    \nUsage: Resets the user to default."
 })
